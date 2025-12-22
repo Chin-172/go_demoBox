@@ -1,0 +1,41 @@
+syntax = "proto3";
+option go_package = "github.com/chin-172/server2client";
+// import "google/protobuf/empty.proto";
+
+// Update
+// protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative protocol_gRPC.proto
+service DataProtocol{
+    rpc serverStreaming (RPCAction) returns (stream DataEntity); // Server push a stream of data to client 
+    rpc serverSending (RPCAction) returns (DataEntity); // Server push an entity of data to client 
+}
+
+message RPCAction{
+    string action = 1; // action ID equals to the function name
+    string keyword = 2;
+}
+message ClientEntity{
+    string ip = 1;
+    uint32 port = 2;
+}
+message DataEntity{
+    uint32 id = 1;
+    oneof data{
+        UserEntity user = 2;
+        GroupEntity group = 3;
+    }
+}
+
+message UserEntity{
+    uint32 id = 1;
+    string username = 2;
+    string password = 3;
+    uint32 auth = 4;
+}
+
+message GroupEntity{
+    uint32 id = 1;
+    string group = 2;
+    string group_leader = 3;
+    string desc = 4;
+    uint32 auth = 5;
+}
