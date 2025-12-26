@@ -45,7 +45,7 @@ func (d *data) ServerStreaming(request *pb.RPCAction, stream pb.DataProtocol_Ser
 				Id:       uint32(user.ID),
 				Username: user.Username,
 				Password: user.Password,
-				Auth:     uint32(user.Auth),
+				Identity: uint32(user.Identity),
 			}
 
 			var passingData pb.DataEntity
@@ -81,18 +81,25 @@ func (d *data) ServerSending(ctx context.Context, request *pb.RPCAction) (*pb.Da
 		// var userEntity pb.DataEntity_User
 
 		userInfo := dbData.GetUserInfo(request.GetKeyword())
+		if userInfo.Username == "" {
+			passingData.Id = uint32(1)
+			passingData.Data = &pb.DataEntity_User{
+				User: nil,
+			}
+		} else {
+			userEntity := &pb.UserEntity{
+				Id:       uint32(userInfo.ID),
+				Username: userInfo.Username,
+				Password: userInfo.Password,
+				Identity: uint32(userInfo.Identity),
+			}
 
-		userEntity := &pb.UserEntity{
-			Id:       uint32(userInfo.ID),
-			Username: userInfo.Username,
-			Password: userInfo.Password,
-			Auth:     uint32(userInfo.Auth),
+			passingData.Id = uint32(1)
+			passingData.Data = &pb.DataEntity_User{
+				User: userEntity,
+			}
 		}
 
-		passingData.Id = uint32(1)
-		passingData.Data = &pb.DataEntity_User{
-			User: userEntity,
-		}
 	default:
 		passingData.Id = uint32(1)
 		passingData.Data = nil

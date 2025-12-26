@@ -29,7 +29,7 @@ message UserEntity{
     uint32 id = 1;
     string username = 2;
     string password = 3;
-    uint32 auth = 4;
+    uint32 Identity = 4;
 }
 
 message GroupEntity{

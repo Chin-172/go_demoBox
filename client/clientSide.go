@@ -17,7 +17,11 @@ import (
 )
 
 var (
-	port = flag.Int("Port", 50002, "Server Port")
+	port       = flag.Int("Port", 50002, "Server Port")
+	login      = make(chan int)
+	userInfo   = make(chan *pb.DataEntity)
+	actionRes  = make(chan int) // 1 - Success ; 0 - Fail
+	actionList = make(chan []string)
 )
 
 var wg sync.WaitGroup
@@ -54,22 +58,82 @@ func callGetAllUser(client pb.DataProtocolClient) {
 
 }
 
-func callGetUserInfo(client pb.DataProtocolClient) {
+func callGetUserInfo(username string, client pb.DataProtocolClient) *pb.DataEntity {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // cancel when we are finished consuming integers
 
 	var action pb.RPCAction
 	action.Action = "GetUserInfo"
-	action.Keyword = "Moon"
+	action.Keyword = username
 
 	res, err := client.ServerSending(ctx, &action)
 	if err != nil {
 		log.Printf("Recv error:%v", err)
+		return nil
 	}
-	log.Printf("Recv data:\nusername: %s\npassword: %s\n", res.GetUser().Username, res.GetUser().Password)
+	log.Printf("Recv data: username: %s\npassword: %s\n", res.GetUser().Username, res.GetUser().Password)
+	if res.GetUser().GetUsername() == "" {
+		return nil
+	}
+	// wg.Done()
+	return res
+}
 
+func actionParse(action string, client pb.DataProtocolClient) {
+	switch action {
+	case "Login":
+		var username string
+		var pwd string
+		fmt.Printf("Username: ")
+		fmt.Scanln(&username)
+
+		fmt.Printf("Password: ")
+		fmt.Scanln(&pwd)
+		for i := 1; i < 3; i++ {
+			var user *pb.DataEntity
+			// wg.Add(1)
+			go func() {
+				userInfo <- callGetUserInfo(username, client)
+			}()
+			// wg.Wait()
+
+			user = <-userInfo
+			if user != nil {
+				if user.GetUser().GetPassword() != pwd {
+					fmt.Printf("Password Incorrect! Please retry again\n")
+					fmt.Printf("Password: ")
+					fmt.Scanln(&pwd)
+
+					if i == 2 {
+						go func() {
+							actionRes <- 0
+						}()
+					}
+				} else {
+					fmt.Printf("Account Login Success!\n")
+					// cmd = 9
+					go func() {
+						login <- 1
+					}()
+					go func() {
+						userInfo <- user
+					}()
+					go func() {
+						actionRes <- 1
+					}()
+					break
+				}
+			} else {
+				fmt.Printf("Username not found!\n")
+				go func() {
+					actionRes <- 0
+				}()
+				break
+			}
+		}
+	}
+	fmt.Println("End")
 	wg.Done()
-
 }
 func main() {
 	flag.Parse()
@@ -82,33 +146,85 @@ func main() {
 
 	client := pb.NewDataProtocolClient(conn)
 	leave := make(chan bool)
+
 	for {
 		var cmd int
-		fmt.Printf("Please input the command (1-callGetAllUser; 2-callGetUserInfo; 9-Exit): ")
+		fmt.Printf("Please input the command (1-System Login; 2-callGetUserInfo; 9-Exit): ")
 		fmt.Scanf("%d\n", &cmd)
-		wg.Add(1)
 		switch cmd {
 		case 1:
+			wg.Add(1)
 			go func() {
-				callGetAllUser(client)
+				actionParse("Login", client)
 			}()
 			wg.Wait()
+			res := <-actionRes
+			fmt.Printf("%d\n", res)
+			var release sync.WaitGroup
 
+			if res == 0 {
+				release.Go(func() {
+					fmt.Printf("1. cmd:%d\n", cmd)
+					isLeave := cmd == 9
+					leave <- isLeave
+				})
+			} else {
+				release.Go(func() {
+					leave <- true
+				})
+			}
 		case 2:
-			go func() {
-				callGetUserInfo(client)
-			}()
-			wg.Wait()
 		default:
-			wg.Done()
+			go func() {
+				login <- 0
+			}()
 		}
+		fmt.Printf("cmd:%d\n", cmd)
 
-		go func() {
-			leave <- cmd == 9
-		}()
 		if <-leave {
 			break
 		}
 	}
 
+	goLoginSystem := <-login
+	fmt.Println(goLoginSystem)
+	if 1 == goLoginSystem {
+		var user *pb.DataEntity
+		user = <-userInfo
+		fmt.Printf("Welcome Back, %s!\n", user.GetUser().Username)
+		for {
+			var cmd int
+			fmt.Printf("Please input the command (1-System Login; 2-callGetUserInfo; 9-Exit): ")
+			fmt.Scanf("%d\n", &cmd)
+			switch cmd {
+			case 1:
+				wg.Add(1)
+				go func() {
+					actionParse("Login", client)
+				}()
+				wg.Wait()
+				res := <-actionRes
+				fmt.Printf("%d\n", res)
+				var release sync.WaitGroup
+
+				if res == 0 {
+					release.Go(func() {
+						fmt.Printf("1. cmd:%d\n", cmd)
+						isLeave := cmd == 9
+						leave <- isLeave
+					})
+				} else {
+					release.Go(func() {
+						leave <- true
+					})
+				}
+			case 2:
+			default:
+				go func() {
+					login <- 0
+				}()
+			}
+
+		}
+	}
 }

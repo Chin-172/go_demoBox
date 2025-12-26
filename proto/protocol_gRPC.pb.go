@@ -220,7 +220,7 @@ type UserEntity struct {
 	Id            uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
-	Auth          uint32                 `protobuf:"varint,4,opt,name=auth,proto3" json:"auth,omitempty"`
+	Identity      uint32                 `protobuf:"varint,4,opt,name=Identity,proto3" json:"Identity,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -276,9 +276,9 @@ func (x *UserEntity) GetPassword() string {
 	return ""
 }
 
-func (x *UserEntity) GetAuth() uint32 {
+func (x *UserEntity) GetIdentity() uint32 {
 	if x != nil {
-		return x.Auth
+		return x.Identity
 	}
 	return 0
 }
@@ -375,13 +375,13 @@ const file_protocol_gRPC_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12!\n" +
 	"\x04user\x18\x02 \x01(\v2\v.UserEntityH\x00R\x04user\x12$\n" +
 	"\x05group\x18\x03 \x01(\v2\f.GroupEntityH\x00R\x05groupB\x06\n" +
-	"\x04data\"h\n" +
+	"\x04data\"p\n" +
 	"\n" +
 	"UserEntity\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x03 \x01(\tR\bpassword\x12\x12\n" +
-	"\x04auth\x18\x04 \x01(\rR\x04auth\"~\n" +
+	"\bpassword\x18\x03 \x01(\tR\bpassword\x12\x1a\n" +
+	"\bIdentity\x18\x04 \x01(\rR\bIdentity\"~\n" +
 	"\vGroupEntity\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x14\n" +
 	"\x05group\x18\x02 \x01(\tR\x05group\x12!\n" +
