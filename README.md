@@ -38,3 +38,4 @@ In order to handle multiple data entity into one rpc function, here using `oneof
 | 20/12/2025 | Create DB table (user_list & group_list) and define rpc service in proto file |
 | 21/12/2025 | Create one streaming and one entire entity gRPC function on server side |
 | 22/12/2025 | Coding the client side function to connect and call server side gRPC functions |
+| 27/12/2025 | Create more relational tables and Added Login & Data Inspection Authority Check Functions  |
