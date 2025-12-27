@@ -11,6 +11,7 @@ type User struct {
 	Username string
 	Password string
 	Identity int
+	GroupID  int
 }
 
 func GetAllUser() []User {
@@ -25,7 +26,7 @@ func GetAllUser() []User {
 
 	for rows.Next() {
 		var user User
-		err = rows.Scan(&user.ID, &user.Username, &user.Password, &user.Identity)
+		err = rows.Scan(&user.ID, &user.Username, &user.Password, &user.Identity, &user.GroupID)
 		CheckError(err)
 
 		res = append(res, user)
@@ -36,7 +37,7 @@ func GetAllUser() []User {
 func GetUserInfo(username string) User {
 	var user User
 	sql_statement := "SELECT * FROM " + table_name + " WHERE username = $1;"
-	err := dbPool.QueryRow(sql_statement, username).Scan(&user.ID, &user.Username, &user.Password, &user.Identity)
+	err := dbPool.QueryRow(sql_statement, username).Scan(&user.ID, &user.Username, &user.Password, &user.Identity, &user.GroupID)
 	if err != nil && err != sql.ErrNoRows {
 		CheckError(err)
 	}

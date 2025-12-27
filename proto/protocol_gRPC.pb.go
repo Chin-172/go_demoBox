@@ -25,6 +25,7 @@ type RPCAction struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Action        string                 `protobuf:"bytes,1,opt,name=action,proto3" json:"action,omitempty"` // action ID equals to the function name
 	Keyword       string                 `protobuf:"bytes,2,opt,name=keyword,proto3" json:"keyword,omitempty"`
+	UserInfo      *UserEntity            `protobuf:"bytes,3,opt,name=userInfo,proto3" json:"userInfo,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -71,6 +72,13 @@ func (x *RPCAction) GetKeyword() string {
 		return x.Keyword
 	}
 	return ""
+}
+
+func (x *RPCAction) GetUserInfo() *UserEntity {
+	if x != nil {
+		return x.UserInfo
+	}
+	return nil
 }
 
 type ClientEntity struct {
@@ -132,6 +140,8 @@ type DataEntity struct {
 	//
 	//	*DataEntity_User
 	//	*DataEntity_Group
+	//	*DataEntity_Action
+	//	*DataEntity_DataCenter
 	Data          isDataEntity_Data `protobuf_oneof:"data"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -199,6 +209,24 @@ func (x *DataEntity) GetGroup() *GroupEntity {
 	return nil
 }
 
+func (x *DataEntity) GetAction() *ActionEntity {
+	if x != nil {
+		if x, ok := x.Data.(*DataEntity_Action); ok {
+			return x.Action
+		}
+	}
+	return nil
+}
+
+func (x *DataEntity) GetDataCenter() *DataCenterEntity {
+	if x != nil {
+		if x, ok := x.Data.(*DataEntity_DataCenter); ok {
+			return x.DataCenter
+		}
+	}
+	return nil
+}
+
 type isDataEntity_Data interface {
 	isDataEntity_Data()
 }
@@ -211,9 +239,21 @@ type DataEntity_Group struct {
 	Group *GroupEntity `protobuf:"bytes,3,opt,name=group,proto3,oneof"`
 }
 
+type DataEntity_Action struct {
+	Action *ActionEntity `protobuf:"bytes,4,opt,name=action,proto3,oneof"`
+}
+
+type DataEntity_DataCenter struct {
+	DataCenter *DataCenterEntity `protobuf:"bytes,5,opt,name=data_center,json=dataCenter,proto3,oneof"`
+}
+
 func (*DataEntity_User) isDataEntity_Data() {}
 
 func (*DataEntity_Group) isDataEntity_Data() {}
+
+func (*DataEntity_Action) isDataEntity_Data() {}
+
+func (*DataEntity_DataCenter) isDataEntity_Data() {}
 
 type UserEntity struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -221,6 +261,7 @@ type UserEntity struct {
 	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
 	Identity      uint32                 `protobuf:"varint,4,opt,name=Identity,proto3" json:"Identity,omitempty"`
+	GroupID       uint32                 `protobuf:"varint,5,opt,name=groupID,proto3" json:"groupID,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -279,6 +320,13 @@ func (x *UserEntity) GetPassword() string {
 func (x *UserEntity) GetIdentity() uint32 {
 	if x != nil {
 		return x.Identity
+	}
+	return 0
+}
+
+func (x *UserEntity) GetGroupID() uint32 {
+	if x != nil {
+		return x.GroupID
 	}
 	return 0
 }
@@ -359,35 +407,196 @@ func (x *GroupEntity) GetAuth() uint32 {
 	return 0
 }
 
+type ActionEntity struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ActionName    string                 `protobuf:"bytes,2,opt,name=action_name,json=actionName,proto3" json:"action_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ActionEntity) Reset() {
+	*x = ActionEntity{}
+	mi := &file_protocol_gRPC_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ActionEntity) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ActionEntity) ProtoMessage() {}
+
+func (x *ActionEntity) ProtoReflect() protoreflect.Message {
+	mi := &file_protocol_gRPC_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ActionEntity.ProtoReflect.Descriptor instead.
+func (*ActionEntity) Descriptor() ([]byte, []int) {
+	return file_protocol_gRPC_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ActionEntity) GetId() uint32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *ActionEntity) GetActionName() string {
+	if x != nil {
+		return x.ActionName
+	}
+	return ""
+}
+
+type DataCenterEntity struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	FileName      string                 `protobuf:"bytes,2,opt,name=file_name,json=fileName,proto3" json:"file_name,omitempty"`
+	Year          uint32                 `protobuf:"varint,3,opt,name=year,proto3" json:"year,omitempty"`
+	Signatory     string                 `protobuf:"bytes,4,opt,name=signatory,proto3" json:"signatory,omitempty"`
+	FileType      string                 `protobuf:"bytes,5,opt,name=file_type,json=fileType,proto3" json:"file_type,omitempty"`
+	AddDt         int64                  `protobuf:"varint,6,opt,name=add_dt,json=addDt,proto3" json:"add_dt,omitempty"`
+	Operator      string                 `protobuf:"bytes,7,opt,name=operator,proto3" json:"operator,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DataCenterEntity) Reset() {
+	*x = DataCenterEntity{}
+	mi := &file_protocol_gRPC_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DataCenterEntity) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DataCenterEntity) ProtoMessage() {}
+
+func (x *DataCenterEntity) ProtoReflect() protoreflect.Message {
+	mi := &file_protocol_gRPC_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DataCenterEntity.ProtoReflect.Descriptor instead.
+func (*DataCenterEntity) Descriptor() ([]byte, []int) {
+	return file_protocol_gRPC_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *DataCenterEntity) GetId() uint32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *DataCenterEntity) GetFileName() string {
+	if x != nil {
+		return x.FileName
+	}
+	return ""
+}
+
+func (x *DataCenterEntity) GetYear() uint32 {
+	if x != nil {
+		return x.Year
+	}
+	return 0
+}
+
+func (x *DataCenterEntity) GetSignatory() string {
+	if x != nil {
+		return x.Signatory
+	}
+	return ""
+}
+
+func (x *DataCenterEntity) GetFileType() string {
+	if x != nil {
+		return x.FileType
+	}
+	return ""
+}
+
+func (x *DataCenterEntity) GetAddDt() int64 {
+	if x != nil {
+		return x.AddDt
+	}
+	return 0
+}
+
+func (x *DataCenterEntity) GetOperator() string {
+	if x != nil {
+		return x.Operator
+	}
+	return ""
+}
+
 var File_protocol_gRPC_proto protoreflect.FileDescriptor
 
 const file_protocol_gRPC_proto_rawDesc = "" +
 	"\n" +
-	"\x13protocol_gRPC.proto\"=\n" +
+	"\x13protocol_gRPC.proto\"f\n" +
 	"\tRPCAction\x12\x16\n" +
 	"\x06action\x18\x01 \x01(\tR\x06action\x12\x18\n" +
-	"\akeyword\x18\x02 \x01(\tR\akeyword\"2\n" +
+	"\akeyword\x18\x02 \x01(\tR\akeyword\x12'\n" +
+	"\buserInfo\x18\x03 \x01(\v2\v.UserEntityR\buserInfo\"2\n" +
 	"\fClientEntity\x12\x0e\n" +
 	"\x02ip\x18\x01 \x01(\tR\x02ip\x12\x12\n" +
-	"\x04port\x18\x02 \x01(\rR\x04port\"m\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\"\xcc\x01\n" +
 	"\n" +
 	"DataEntity\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12!\n" +
 	"\x04user\x18\x02 \x01(\v2\v.UserEntityH\x00R\x04user\x12$\n" +
-	"\x05group\x18\x03 \x01(\v2\f.GroupEntityH\x00R\x05groupB\x06\n" +
-	"\x04data\"p\n" +
+	"\x05group\x18\x03 \x01(\v2\f.GroupEntityH\x00R\x05group\x12'\n" +
+	"\x06action\x18\x04 \x01(\v2\r.ActionEntityH\x00R\x06action\x124\n" +
+	"\vdata_center\x18\x05 \x01(\v2\x11.DataCenterEntityH\x00R\n" +
+	"dataCenterB\x06\n" +
+	"\x04data\"\x8a\x01\n" +
 	"\n" +
 	"UserEntity\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
 	"\bpassword\x18\x03 \x01(\tR\bpassword\x12\x1a\n" +
-	"\bIdentity\x18\x04 \x01(\rR\bIdentity\"~\n" +
+	"\bIdentity\x18\x04 \x01(\rR\bIdentity\x12\x18\n" +
+	"\agroupID\x18\x05 \x01(\rR\agroupID\"~\n" +
 	"\vGroupEntity\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x14\n" +
 	"\x05group\x18\x02 \x01(\tR\x05group\x12!\n" +
 	"\fgroup_leader\x18\x03 \x01(\tR\vgroupLeader\x12\x12\n" +
 	"\x04desc\x18\x04 \x01(\tR\x04desc\x12\x12\n" +
-	"\x04auth\x18\x05 \x01(\rR\x04auth2f\n" +
+	"\x04auth\x18\x05 \x01(\rR\x04auth\"?\n" +
+	"\fActionEntity\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\rR\x02id\x12\x1f\n" +
+	"\vaction_name\x18\x02 \x01(\tR\n" +
+	"actionName\"\xc1\x01\n" +
+	"\x10DataCenterEntity\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\rR\x02id\x12\x1b\n" +
+	"\tfile_name\x18\x02 \x01(\tR\bfileName\x12\x12\n" +
+	"\x04year\x18\x03 \x01(\rR\x04year\x12\x1c\n" +
+	"\tsignatory\x18\x04 \x01(\tR\tsignatory\x12\x1b\n" +
+	"\tfile_type\x18\x05 \x01(\tR\bfileType\x12\x15\n" +
+	"\x06add_dt\x18\x06 \x01(\x03R\x05addDt\x12\x1a\n" +
+	"\boperator\x18\a \x01(\tR\boperator2f\n" +
 	"\fDataProtocol\x12,\n" +
 	"\x0fserverStreaming\x12\n" +
 	".RPCAction\x1a\v.DataEntity0\x01\x12(\n" +
@@ -406,26 +615,31 @@ func file_protocol_gRPC_proto_rawDescGZIP() []byte {
 	return file_protocol_gRPC_proto_rawDescData
 }
 
-var file_protocol_gRPC_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_protocol_gRPC_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_protocol_gRPC_proto_goTypes = []any{
-	(*RPCAction)(nil),    // 0: RPCAction
-	(*ClientEntity)(nil), // 1: ClientEntity
-	(*DataEntity)(nil),   // 2: DataEntity
-	(*UserEntity)(nil),   // 3: UserEntity
-	(*GroupEntity)(nil),  // 4: GroupEntity
+	(*RPCAction)(nil),        // 0: RPCAction
+	(*ClientEntity)(nil),     // 1: ClientEntity
+	(*DataEntity)(nil),       // 2: DataEntity
+	(*UserEntity)(nil),       // 3: UserEntity
+	(*GroupEntity)(nil),      // 4: GroupEntity
+	(*ActionEntity)(nil),     // 5: ActionEntity
+	(*DataCenterEntity)(nil), // 6: DataCenterEntity
 }
 var file_protocol_gRPC_proto_depIdxs = []int32{
-	3, // 0: DataEntity.user:type_name -> UserEntity
-	4, // 1: DataEntity.group:type_name -> GroupEntity
-	0, // 2: DataProtocol.serverStreaming:input_type -> RPCAction
-	0, // 3: DataProtocol.serverSending:input_type -> RPCAction
-	2, // 4: DataProtocol.serverStreaming:output_type -> DataEntity
-	2, // 5: DataProtocol.serverSending:output_type -> DataEntity
-	4, // [4:6] is the sub-list for method output_type
-	2, // [2:4] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	3, // 0: RPCAction.userInfo:type_name -> UserEntity
+	3, // 1: DataEntity.user:type_name -> UserEntity
+	4, // 2: DataEntity.group:type_name -> GroupEntity
+	5, // 3: DataEntity.action:type_name -> ActionEntity
+	6, // 4: DataEntity.data_center:type_name -> DataCenterEntity
+	0, // 5: DataProtocol.serverStreaming:input_type -> RPCAction
+	0, // 6: DataProtocol.serverSending:input_type -> RPCAction
+	2, // 7: DataProtocol.serverStreaming:output_type -> DataEntity
+	2, // 8: DataProtocol.serverSending:output_type -> DataEntity
+	7, // [7:9] is the sub-list for method output_type
+	5, // [5:7] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_protocol_gRPC_proto_init() }
@@ -436,6 +650,8 @@ func file_protocol_gRPC_proto_init() {
 	file_protocol_gRPC_proto_msgTypes[2].OneofWrappers = []any{
 		(*DataEntity_User)(nil),
 		(*DataEntity_Group)(nil),
+		(*DataEntity_Action)(nil),
+		(*DataEntity_DataCenter)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -443,7 +659,7 @@ func file_protocol_gRPC_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_protocol_gRPC_proto_rawDesc), len(file_protocol_gRPC_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

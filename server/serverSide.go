@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
+	"strings"
 
 	pb "github.com/chin-172/go_demoBox/proto" // go.mod 的module name + 目錄
 	"google.golang.org/grpc"
@@ -22,8 +24,11 @@ type data struct {
 }
 
 var (
-	port     = flag.Int("Port", 50002, "Listening port")
-	userRecv = make(chan []dbData.User)
+	port       = flag.Int("Port", 50002, "Listening port")
+	userRecv   = make(chan []dbData.User)
+	actionList = make(chan []string)
+	dataList   = make(chan []dbData.DataCenter)
+	authPass   = make(chan bool)
 )
 
 func (d *data) ServerStreaming(request *pb.RPCAction, stream pb.DataProtocol_ServerStreamingServer) error {
@@ -46,6 +51,7 @@ func (d *data) ServerStreaming(request *pb.RPCAction, stream pb.DataProtocol_Ser
 				Username: user.Username,
 				Password: user.Password,
 				Identity: uint32(user.Identity),
+				GroupID:  uint32(user.GroupID),
 			}
 
 			var passingData pb.DataEntity
@@ -62,6 +68,83 @@ func (d *data) ServerStreaming(request *pb.RPCAction, stream pb.DataProtocol_Ser
 			}
 		}
 
+	case "GetUserActionList":
+		auth, err := strconv.Atoi(request.GetKeyword())
+		if err != nil {
+			fmt.Printf("Int Parse error:%v\n", err)
+			return err
+		}
+		go func() {
+			actionList <- dbData.GetUserActionList(auth)
+		}()
+
+		for i, action := range <-actionList {
+			fmt.Printf("%d %s\n", i, action)
+			actionEntity := &pb.ActionEntity{
+				Id:         uint32(i),
+				ActionName: action,
+			}
+			var passingData pb.DataEntity
+			passingData.Id = uint32(i)
+			passingData.Data = &pb.DataEntity_Action{
+				Action: actionEntity,
+			}
+
+			err := stream.Send(&passingData)
+
+			if err != nil {
+				fmt.Printf("Send error:%v\n", err)
+				return err
+			}
+		}
+
+	case "GetAllDataList":
+		// Check authorization of data query
+		var caseLevel []string
+		if strings.Contains(request.GetKeyword(), "+") {
+			caseLevel = strings.Split(request.GetKeyword(), "+")
+		} else {
+			caseLevel = append(caseLevel, request.GetKeyword())
+		}
+		fmt.Printf("caseLevel: %s\n", caseLevel)
+
+		go func() {
+			authPass <- dbData.CheckAuth(int(request.GetUserInfo().GroupID), caseLevel)
+		}()
+
+		pass := <-authPass
+		if !pass {
+			dbData.CloseDBConn()
+			return fmt.Errorf("User have no authority to check this case level data")
+		}
+		fmt.Printf("Auth Pass!\n")
+		go func() {
+			dataList <- dbData.GetAllDataList(caseLevel)
+		}()
+
+		for i, data := range <-dataList {
+			dataEntity := &pb.DataCenterEntity{
+				Id:        uint32(i),
+				FileName:  data.FileName,
+				Year:      uint32(data.Year),
+				Signatory: data.Signatory,
+				FileType:  data.FileType,
+				AddDt:     data.AddDt.Unix(),
+				Operator:  data.Operator,
+			}
+			var passingData pb.DataEntity
+			passingData.Id = uint32(i)
+			passingData.Data = &pb.DataEntity_DataCenter{
+				DataCenter: dataEntity,
+			}
+
+			err := stream.Send(&passingData)
+
+			if err != nil {
+				fmt.Printf("Send error:%v\n", err)
+				return err
+			}
+		}
 	}
 	fmt.Printf("%x close\n", stream.Context().Done())
 	dbData.CloseDBConn()

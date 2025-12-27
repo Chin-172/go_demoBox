@@ -20,8 +20,9 @@ var (
 	port       = flag.Int("Port", 50002, "Server Port")
 	login      = make(chan int)
 	userInfo   = make(chan *pb.DataEntity)
+	dataList   = make(chan []*pb.DataCenterEntity)
 	actionRes  = make(chan int) // 1 - Success ; 0 - Fail
-	actionList = make(chan []string)
+	actionList = make([]string, 0, 100)
 )
 
 var wg sync.WaitGroup
@@ -71,15 +72,92 @@ func callGetUserInfo(username string, client pb.DataProtocolClient) *pb.DataEnti
 		log.Printf("Recv error:%v", err)
 		return nil
 	}
-	log.Printf("Recv data: username: %s\npassword: %s\n", res.GetUser().Username, res.GetUser().Password)
+	// log.Printf("Recv data: username: %s\npassword: %s\n", res.GetUser().Username, res.GetUser().Password)
 	if res.GetUser().GetUsername() == "" {
 		return nil
 	}
-	// wg.Done()
 	return res
 }
 
-func actionParse(action string, client pb.DataProtocolClient) {
+func getAccountActionList(identity int, client pb.DataProtocolClient) {
+	// var actionList []string
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // cancel when we are finished consuming integers
+
+	var action pb.RPCAction
+	action.Action = "GetUserActionList"
+	fmt.Printf("identity: %d\n", identity)
+	// switch identity {
+	// case 0:
+	// 	action.Keyword = "0"
+
+	// }
+
+	action.Keyword = strconv.Itoa(identity)
+
+	stream, err := client.ServerStreaming(ctx, &action)
+	if err != nil {
+		log.Printf("Recv error:%v", err)
+		wg.Done()
+		return
+	}
+	// if res.GetAction().GetActionName() != "" {
+	// 	actionList = append(actionList, res.GetAction().GetActionName())
+	// }
+	for {
+		resp, err := stream.Recv()
+		log.Printf("Recv data: %s\n", resp.GetAction().GetActionName())
+
+		if err == io.EOF {
+			log.Println("EOF")
+			break
+		}
+		if err != nil {
+			// log.Printf("Recv error:%v", err)
+			break
+		}
+		if resp.GetAction().GetActionName() != "" {
+			actionList = append(actionList, resp.GetAction().GetActionName())
+		}
+	}
+	wg.Done()
+}
+
+func getAllDataList(user *pb.UserEntity, level string, client pb.DataProtocolClient) []*pb.DataCenterEntity {
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // cancel when we are finished consuming integers
+	var data []*pb.DataCenterEntity
+	var action pb.RPCAction
+	action.Action = "GetAllDataList"
+	action.Keyword = level
+	action.UserInfo = user
+	stream, err := client.ServerStreaming(ctx, &action)
+	if err != nil {
+		log.Printf("Recv error:%v", err)
+		// wg.Done()
+		return data
+	}
+	for {
+		resp, err := stream.Recv()
+		if err == io.EOF {
+			log.Println("EOF")
+			break
+		}
+		if err != nil {
+			log.Printf("Recv error:%v", err)
+			break
+		}
+		// log.Printf("Recv data:%v", resp)
+
+		if resp.GetDataCenter().GetFileName() != "" {
+			data = append(data, resp.GetDataCenter())
+		}
+	}
+	return data
+
+}
+func actionParse(action string, client pb.DataProtocolClient, user *pb.UserEntity) {
 	switch action {
 	case "Login":
 		var username string
@@ -131,8 +209,27 @@ func actionParse(action string, client pb.DataProtocolClient) {
 				break
 			}
 		}
+
+	case "Data Center":
+		fmt.Println("Data Center In")
+
+		var level string
+		fmt.Printf("Please input which level case you want to view: (All/A/B/C):")
+		fmt.Scanf("%s\n", &level)
+		go func() {
+			dataList <- getAllDataList(user, level, client)
+		}()
+
+		for i, data := range <-dataList {
+			fmt.Printf("%d. %s\n", i+1, data.FileName)
+		}
+	case "Log":
+		fmt.Println("Log In")
+	case "Group List":
+		fmt.Println("Group List In")
+	case "User List":
+		fmt.Println("User List In")
 	}
-	fmt.Println("End")
 	wg.Done()
 }
 func main() {
@@ -155,7 +252,7 @@ func main() {
 		case 1:
 			wg.Add(1)
 			go func() {
-				actionParse("Login", client)
+				actionParse("Login", client, nil)
 			}()
 			wg.Wait()
 			res := <-actionRes
@@ -174,6 +271,10 @@ func main() {
 				})
 			}
 		case 2:
+		case 9:
+			go func() {
+				leave <- true
+			}()
 		default:
 			go func() {
 				login <- 0
@@ -190,41 +291,35 @@ func main() {
 	fmt.Println(goLoginSystem)
 	if 1 == goLoginSystem {
 		var user *pb.DataEntity
+		var cmd int
+
 		user = <-userInfo
 		fmt.Printf("Welcome Back, %s!\n", user.GetUser().Username)
+		// GetActionList
+		wg.Add(1)
+		go func() {
+			getAccountActionList(int(user.Id), client)
+		}()
+		wg.Wait()
 		for {
-			var cmd int
-			fmt.Printf("Please input the command (1-System Login; 2-callGetUserInfo; 9-Exit): ")
-			fmt.Scanf("%d\n", &cmd)
-			switch cmd {
-			case 1:
-				wg.Add(1)
-				go func() {
-					actionParse("Login", client)
-				}()
-				wg.Wait()
-				res := <-actionRes
-				fmt.Printf("%d\n", res)
-				var release sync.WaitGroup
 
-				if res == 0 {
-					release.Go(func() {
-						fmt.Printf("1. cmd:%d\n", cmd)
-						isLeave := cmd == 9
-						leave <- isLeave
-					})
-				} else {
-					release.Go(func() {
-						leave <- true
-					})
-				}
-			case 2:
-			default:
-				go func() {
-					login <- 0
-				}()
+			fmt.Printf("Please input the command \n")
+			for i, action := range actionList {
+				fmt.Printf("%d. %s\n", i+1, action)
 			}
+			fmt.Printf("Command: ")
 
+			fmt.Scanf("%d\n", &cmd)
+			action := actionList[cmd-1]
+
+			wg.Add(1)
+			go func() {
+				var userInfo pb.UserEntity
+				userInfo = *user.GetUser()
+				actionParse(action, client, &userInfo)
+			}()
+			wg.Wait()
 		}
+
 	}
 }

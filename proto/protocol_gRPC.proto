@@ -12,6 +12,7 @@ service DataProtocol{
 message RPCAction{
     string action = 1; // action ID equals to the function name
     string keyword = 2;
+    UserEntity userInfo = 3;
 }
 message ClientEntity{
     string ip = 1;
@@ -22,6 +23,8 @@ message DataEntity{
     oneof data{
         UserEntity user = 2;
         GroupEntity group = 3;
+        ActionEntity action = 4;
+        DataCenterEntity data_center = 5;
     }
 }
 
@@ -30,6 +33,7 @@ message UserEntity{
     string username = 2;
     string password = 3;
     uint32 Identity = 4;
+    uint32 groupID = 5;
 }
 
 message GroupEntity{
@@ -38,4 +42,19 @@ message GroupEntity{
     string group_leader = 3;
     string desc = 4;
     uint32 auth = 5;
+}
+
+message ActionEntity{
+    uint32 id = 1;
+    string action_name = 2;
+}
+
+message DataCenterEntity{
+    uint32 id = 1;
+    string file_name = 2;
+    uint32 year = 3;
+    string signatory = 4;
+    string file_type = 5;
+    int64 add_dt = 6;
+    string operator = 7;
 }
