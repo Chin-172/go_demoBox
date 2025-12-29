@@ -2,7 +2,8 @@
 
 
 Hi👋 DemoBox is a simple work of user rights manage system, which using gRPC functions and run between Server and Client side. You may through CLI to input the client actions and get the results and data from server side. Following picture shows you what are the core structures inside this system. 
-<img width="1329" height="687" alt="image" src="https://github.com/user-attachments/assets/63da4673-b28a-46c2-a991-0a9048b9b76d" />
+<img width="1420" height="649" alt="image" src="https://github.com/user-attachments/assets/a3df37b6-d6b8-4f31-a907-47570ad0c664" />
+
 
 ### System Env
 DB: PostgreSQL\
