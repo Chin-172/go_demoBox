@@ -2,6 +2,7 @@
 
 
 Hi👋 DemoBox is a simple work of gRPC functions run between Server and Client side. You may through this project to see how the SQL function works on gRPC functions and how the gRPC communicate between server and client side.
+<img width="1329" height="687" alt="image" src="https://github.com/user-attachments/assets/63da4673-b28a-46c2-a991-0a9048b9b76d" />
 
 ### System Env
 DB: PostgreSQL\
@@ -23,14 +24,6 @@ Run Client:
 cd server
 go run .\serverSide.go
 ```
-
-### How gRPC functions work
-<img width="500" height="550" alt="image" src="https://github.com/user-attachments/assets/2f72ee73-181b-4b12-86b8-c3e4da5e5201" />
-<img width="500" height="550" alt="image" src="https://github.com/user-attachments/assets/32a9a01f-5c53-4551-ba43-65276c9ccb58" />
-
-### Oneof Field Type
-In order to handle multiple data entity into one rpc function, here using `oneof` field to define the data entity type
-<img width="702" height="562" alt="image" src="https://github.com/user-attachments/assets/68ab81df-ee05-4f37-bec6-87cf3e76c5a3" />
 
 ### Progress
 | Date | Progress |
